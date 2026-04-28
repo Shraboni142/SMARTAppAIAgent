@@ -1,0 +1,202 @@
+﻿@model SMART.Web.Models.HRM.EmployeeComplain
+
+@{
+    bool isMiddleManMode = ViewBag.IsMiddleManMode != null && Convert.ToBoolean(ViewBag.IsMiddleManMode);
+
+    ViewBag.Title = isMiddleManMode ? "Details" : "View Complain Action Information";
+    Layout = isMiddleManMode ? "~/Views/Shared/_Layout.cshtml" : "~/Views/Shared/_AdminLayout.cshtml";
+
+    if (!isMiddleManMode)
+    {
+        ViewBag.ActiveMenu = "EmployeeComplainReview";
+    }
+
+    var currentStatus = string.IsNullOrWhiteSpace(Model.ReviewStatus) ? "Pending" : Model.ReviewStatus;
+}
+
+@if (isMiddleManMode)
+{
+    <h2>Details</h2>
+
+    <div>
+        <h4>Complain</h4>
+        <hr />
+        <dl class="dl-horizontal">
+            <dt>Employee Name</dt>
+            <dd>@Model.EmployeeName</dd>
+
+            <dt>Employee Code</dt>
+            <dd>@Model.EmployeeCode</dd>
+
+            <dt>Offence Type</dt>
+            <dd>@Model.OffenceType</dd>
+
+            <dt>Offence Details</dt>
+            <dd>@Model.OffenceDetails</dd>
+
+            <dt>Complain Action Type</dt>
+            <dd>@Model.ComplainActionType</dd>
+
+            <dt>Complain Action Details</dt>
+            <dd>@Model.ComplainActionDetails</dd>
+
+            <dt>Date Of Notice</dt>
+            <dd>@Model.DateOfNotice.ToString("dd/MM/yyyy")</dd>
+
+            <dt>Early Withdrawal Date</dt>
+            <dd>@(Model.EarlyWithdrawalDate.HasValue ? Model.EarlyWithdrawalDate.Value.ToString("dd/MM/yyyy") : "")</dd>
+
+            <dt>Attachment</dt>
+            <dd>
+                @if (!string.IsNullOrWhiteSpace(Model.AttachmentFilePath))
+                {
+                    <a href="@Url.Content(Model.AttachmentFilePath)" target="_blank">View Attachment</a>
+                }
+                else
+                {
+                    <span>No attachment found.</span>
+                }
+            </dd>
+
+            <dt>Status</dt>
+            <dd>@currentStatus</dd>
+        </dl>
+    </div>
+
+    <p>
+        @Html.ActionLink("Back to List", "MiddleManList")
+    </p>
+}
+else
+{
+    
+
+    if (TempData["msg"] != null)
+    {
+        <div class="alert alert-info">@TempData["msg"]</div>
+    }
+
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <div class="row">
+                <div class="col-md-8">
+                    <strong>View Complain Action Information</strong>
+                </div>
+                <div class="col-md-4 text-right">
+                    <a href="@Url.Action("Review", "EmployeeComplain")" class="btn btn-warning">Back to List</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel-body">
+            <div class="form-horizontal">
+
+                <div class="form-group">
+                    <label class="col-md-4 control-label">Employee Name</label>
+                    <div class="col-md-6">
+                        <input type="text" class="form-control" value="@Model.EmployeeName" readonly />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-4 control-label">Employee Code</label>
+                    <div class="col-md-6">
+                        <input type="text" class="form-control" value="@Model.EmployeeCode" readonly />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-4 control-label">Offence Type</label>
+                    <div class="col-md-6">
+                        <input type="text" class="form-control" value="@Model.OffenceType" readonly />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-4 control-label">Offence Details</label>
+                    <div class="col-md-6">
+                        <textarea class="form-control" rows="4" readonly>@Model.OffenceDetails</textarea>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-4 control-label">Complain Action Type</label>
+                    <div class="col-md-6">
+                        <input type="text" class="form-control" value="@Model.ComplainActionType" readonly />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-4 control-label">Complain Action Details</label>
+                    <div class="col-md-6">
+                        <textarea class="form-control" rows="4" readonly>@Model.ComplainActionDetails</textarea>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-4 control-label">Date of Notice</label>
+                    <div class="col-md-6">
+                        <input type="text" class="form-control" value="@Model.DateOfNotice.ToString("dd/MM/yyyy")" readonly />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-4 control-label">Early Withdrawal Date</label>
+                    <div class="col-md-6">
+                        <input type="text" class="form-control" value="@(Model.EarlyWithdrawalDate.HasValue ? Model.EarlyWithdrawalDate.Value.ToString("dd/MM/yyyy") : "")" readonly />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-4 control-label">Attachment</label>
+                    <div class="col-md-6">
+                        @if (!string.IsNullOrWhiteSpace(Model.AttachmentFilePath))
+                        {
+                            <a href="@Url.Content(Model.AttachmentFilePath)" target="_blank" class="btn btn-info btn-sm">
+                                View Attachment
+                            </a>
+                        }
+                        else
+                        {
+                            <span>No attachment found.</span>
+                        }
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-4 control-label"><strong>Current Status</strong></label>
+                    <div class="col-md-6">
+                        <input type="text" class="form-control" value="@currentStatus" readonly />
+                    </div>
+                </div>
+
+                <hr />
+
+                @using (Html.BeginForm("UpdateReviewStatus", "EmployeeComplain", FormMethod.Post))
+                {
+                    @Html.AntiForgeryToken()
+                    @Html.Hidden("id", Model.Id)
+
+                    <div class="form-group">
+                        <label class="col-md-4 control-label"><strong>Set Review Status</strong></label>
+                        <div class="col-md-6">
+                            <select id="reviewStatus" name="reviewStatus" class="form-control">
+                                <option value="">-- Select Status --</option>
+                                <option value="InProgress" @(currentStatus == "InProgress" ? "selected=\"selected\"" : "")>InProgress</option>
+                                <option value="Resolve" @(currentStatus == "Resolve" ? "selected=\"selected\"" : "")>Resolve</option>
+                                <option value="Reject" @(currentStatus == "Reject" ? "selected=\"selected\"" : "")>Reject</option>
+                            </select>
+                            <small class="text-muted">Default status is Pending until HR selects one.</small>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-top:15px;">
+                        <div class="col-md-offset-4 col-md-6">
+                            <button type="submit" class="btn btn-success">Update Status</button>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}

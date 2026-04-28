@@ -1,0 +1,112 @@
+﻿@model IEnumerable<SMART.Web.Models.HRM.EmployeeComplain>
+
+@{
+    ViewBag.Title = ViewBag.IsReviewMode != null && Convert.ToBoolean(ViewBag.IsReviewMode)
+        ? "Employee Complain Review"
+        : "Complain List";
+
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    bool isReviewMode = ViewBag.IsReviewMode != null && Convert.ToBoolean(ViewBag.IsReviewMode);
+    bool isMiddleManMode = ViewBag.IsMiddleManMode != null && Convert.ToBoolean(ViewBag.IsMiddleManMode);
+    ViewBag.ActiveMenu = isReviewMode ? "EmployeeComplainReview" : "ComplainList";
+}
+
+
+
+@if (TempData["msg"] != null)
+{
+    <div class="alert alert-info">@TempData["msg"]</div>
+}
+
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <div class="row">
+            <div class="col-md-8">
+                <strong>@(isReviewMode ? "Employee Complain Review" : "Complain List")</strong>
+            </div>
+            <div class="col-md-4 text-right">
+                @if (!isReviewMode && !isMiddleManMode)
+                {
+                    <a href="@Url.Action("Create", "EmployeeComplain")" class="btn btn-success">Add New</a>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="panel-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>Complain ID</th>
+                        <th>Employee Code</th>
+                        <th>Employee Name</th>
+                        <th>Offence Type</th>
+                        <th>Offence Details</th>
+                        <th>Complain Action Type</th>
+                        <th>Complain Action Details</th>
+                        <th>Status</th>
+                        <th style="width:@(isReviewMode ? "170px" : "180px");">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var item in Model)
+                        {
+                            var currentStatus = string.IsNullOrWhiteSpace(item.ReviewStatus) ? "Pending" : item.ReviewStatus;
+
+                            <tr>
+                                <td>@item.Id</td>
+                                <td>@item.EmployeeCode</td>
+                                <td>@item.EmployeeName</td>
+                                <td>@item.OffenceType</td>
+                                <td>@item.OffenceDetails</td>
+                                <td>@item.ComplainActionType</td>
+                                <td>@item.ComplainActionDetails</td>
+                                <td>@currentStatus</td>
+                                <td>
+                                    @if (isMiddleManMode)
+                                    {
+                                        <a href="@Url.Action("MiddleManView", "EmployeeComplain", new { id = item.Id })"
+                                           class="btn btn-info btn-sm">View</a>
+                                    }
+                                    else if (isReviewMode)
+                                    {
+                                        <a href="@Url.Action("ViewComplain", "EmployeeComplain", new { id = item.Id })"
+                                           class="btn btn-info btn-sm">View</a>
+                                    }
+                                    else
+                                    {
+                                        if (currentStatus.Equals("Pending", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            <a href="@Url.Action("Edit", "EmployeeComplain", new { id = item.Id })"
+                                               class="btn btn-primary btn-sm">Edit</a>
+
+                                            using (Html.BeginForm("Delete", "EmployeeComplain", FormMethod.Post, new { style = "display:inline;" }))
+                                            {
+                                                @Html.AntiForgeryToken()
+                                                @Html.Hidden("id", item.Id)
+                                                <button type="submit"
+                                                        class="btn btn-danger btn-sm"
+                                                        onclick="return confirm('Are you sure you want to delete this record?');">
+                                                    Delete
+                                                </button>
+                                            }
+                                        }
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="9" class="text-center">No data found.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

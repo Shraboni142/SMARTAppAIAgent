@@ -1,0 +1,167 @@
+﻿@model SMART.Web.Models.HRM.EmployeeComplain
+
+@{
+    ViewBag.Title = Model != null && Model.Id > 0
+        ? "Edit Complain Action Information"
+        : "Add Complain Action Information";
+
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewBag.ActiveMenu = "ComplainList";
+}
+
+
+
+@if (TempData["msg"] != null)
+{
+    <div class="alert alert-info">@TempData["msg"]</div>
+}
+
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <div class="row">
+            <div class="col-md-8">
+                <strong>@ViewBag.Title</strong><br />
+                <small>All Red marked are required</small>
+            </div>
+            <div class="col-md-4 text-right">
+                <a href="@Url.Action("Index", "EmployeeComplain")" class="btn btn-warning">Back to List</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel-body">
+        @using (Html.BeginForm(Model != null && Model.Id > 0 ? "Edit" : "Create", "EmployeeComplain", FormMethod.Post, new { enctype = "multipart/form-data", id = "ComplainActionForm" }))
+        {
+            @Html.AntiForgeryToken()
+            @Html.HiddenFor(model => model.Id)
+            @Html.HiddenFor(model => model.ReviewStatus)
+            @Html.HiddenFor(model => model.AttachmentFileName)
+            @Html.HiddenFor(model => model.AttachmentFilePath)
+
+            <div class="form-horizontal">
+                <div class="form-group">
+                    <label class="col-md-4 control-label">Employee Name</label>
+                    <div class="col-md-6">
+                        @Html.TextBoxFor(model => model.EmployeeName, new { @class = "form-control" })
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-4 control-label">Employee Code</label>
+                    <div class="col-md-6">
+                        @Html.TextBoxFor(model => model.EmployeeCode, new { @class = "form-control" })
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-4 control-label">Offence Type <span style="color:red">*</span></label>
+                    <div class="col-md-6">
+                        @Html.DropDownListFor(model => model.OffenceType,
+                            new List<SelectListItem>
+                            {
+                                new SelectListItem { Text = "-- Select --", Value = "" },
+                                new SelectListItem { Text = "Internal", Value = "Internal" },
+                                new SelectListItem { Text = "External", Value = "External" },
+                                new SelectListItem { Text = "Attendance Issue", Value = "Attendance Issue" },
+                                new SelectListItem { Text = "Misconduct", Value = "Misconduct" },
+                                new SelectListItem { Text = "Policy Violation", Value = "Policy Violation" },
+                                new SelectListItem { Text = "Behavior Related", Value = "Behavior Related" },
+                                new SelectListItem { Text = "Harassment", Value = "Harassment" },
+                                new SelectListItem { Text = "Verbal Abuse", Value = "Verbal Abuse" },
+                                new SelectListItem { Text = "Physical Misconduct", Value = "Physical Misconduct" },
+                                new SelectListItem { Text = "Disobedience", Value = "Disobedience" },
+                                new SelectListItem { Text = "Negligence of Duty", Value = "Negligence of Duty" },
+                                new SelectListItem { Text = "Unauthorized Absence", Value = "Unauthorized Absence" },
+                                new SelectListItem { Text = "Insubordination", Value = "Insubordination" },
+                                new SelectListItem { Text = "Workplace Conflict", Value = "Workplace Conflict" },
+                                new SelectListItem { Text = "Ethical Violation", Value = "Ethical Violation" },
+                                new SelectListItem { Text = "Confidentiality Breach", Value = "Confidentiality Breach" },
+                                new SelectListItem { Text = "Other", Value = "Other" }
+                            },
+                            new { @class = "form-control", id = "OffenceType" })
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-4 control-label">Offence Details</label>
+                    <div class="col-md-6">
+                        @Html.TextAreaFor(model => model.OffenceDetails, new { @class = "form-control", rows = "4" })
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-4 control-label">Complain Action Type <span style="color:red">*</span></label>
+                    <div class="col-md-6">
+                        @Html.DropDownListFor(model => model.ComplainActionType,
+                            new List<SelectListItem>
+                            {
+                                new SelectListItem { Text = "-- Select --", Value = "" },
+                                new SelectListItem { Text = "Show Cause Letter", Value = "Show Cause Letter" },
+                                new SelectListItem { Text = "Warning Letter", Value = "Warning Letter" },
+                                new SelectListItem { Text = "Verbal Warning", Value = "Verbal Warning" },
+                                new SelectListItem { Text = "Written Warning", Value = "Written Warning" },
+                                new SelectListItem { Text = "Final Notice", Value = "Final Notice" },
+                                new SelectListItem { Text = "Suspension", Value = "Suspension" },
+                                new SelectListItem { Text = "Termination Recommendation", Value = "Termination Recommendation" },
+                                new SelectListItem { Text = "Explanation Call", Value = "Explanation Call" },
+                                new SelectListItem { Text = "Investigation", Value = "Investigation" },
+                                new SelectListItem { Text = "Counseling", Value = "Counseling" },
+                                new SelectListItem { Text = "Other", Value = "Other" }
+                            },
+                            new { @class = "form-control", id = "ComplainActionType" })
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-4 control-label">Complain Action Details</label>
+                    <div class="col-md-6">
+                        @Html.TextAreaFor(model => model.ComplainActionDetails, new { @class = "form-control", rows = "4" })
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-4 control-label">Date of Notice <span style="color:red">*</span></label>
+                    <div class="col-md-6">
+                        @Html.TextBoxFor(model => model.DateOfNotice, "{0:yyyy-MM-dd}", new { @class = "form-control", type = "date", id = "DateOfNotice" })
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-4 control-label">Early Withdrawal Date</label>
+                    <div class="col-md-6">
+                        @Html.TextBoxFor(model => model.EarlyWithdrawalDate, "{0:yyyy-MM-dd}", new { @class = "form-control", type = "date", id = "EarlyWithdrawalDate" })
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-4 control-label">Attach File</label>
+                    <div class="col-md-6">
+                        @if (Model != null && Model.Id > 0 && !string.IsNullOrWhiteSpace(Model.AttachmentFilePath))
+                        {
+                            <div style="margin-bottom:8px;">
+                                <strong>Current File:</strong>
+                                <a href="@Url.Content(Model.AttachmentFilePath)" target="_blank">
+                                    @(string.IsNullOrWhiteSpace(Model.AttachmentFileName) ? "View Attachment" : Model.AttachmentFileName)
+                                </a>
+                            </div>
+
+                            <small class="text-muted" style="display:block; margin-bottom:8px;">
+                                Previous file is kept. Choose a new file only if you want to replace it.
+                            </small>
+                        }
+
+                        <input type="file" name="AttachmentFile" id="AttachmentFile" class="form-control" />
+                        <small class="text-muted">Allowed max file size: 50 KB</small>F
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top:20px;">
+                    <div class="col-md-offset-4 col-md-6">
+                        <button type="submit" class="btn btn-success">Save</button>
+                        <a href="@Url.Action("Index", "EmployeeComplain")" class="btn btn-danger">Cancel</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

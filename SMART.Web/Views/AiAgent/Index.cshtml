@@ -1,0 +1,225 @@
+﻿@{
+    ViewBag.Title = "AI Agent";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .ai-wrapper {
+        display: flex;
+        height: 620px;
+        border: 1px solid #ddd;
+        background: #fff;
+    }
+
+    .ai-sidebar {
+        width: 260px;
+        border-right: 1px solid #ddd;
+        padding: 12px;
+        background: #f7f7f7;
+        overflow-y: auto;
+    }
+
+    .ai-main {
+        flex: 1;
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .ai-header {
+        margin-bottom: 10px;
+    }
+
+    .chat-item {
+        padding: 8px;
+        margin-bottom: 6px;
+        background: #fff;
+        border: 1px solid #ddd;
+        cursor: pointer;
+        border-radius: 4px;
+    }
+
+        .chat-item:hover {
+            background: #e9f2ff;
+        }
+
+    #chatBox {
+        flex: 1;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        padding: 15px;
+        background: #fafafa;
+        margin-bottom: 10px;
+    }
+
+    .user-msg {
+        margin-bottom: 10px;
+    }
+
+    .ai-msg {
+        margin-bottom: 15px;
+        background: #fff;
+        padding: 8px;
+        border-radius: 4px;
+        border: 1px solid #eee;
+    }
+
+    .error-msg {
+        color: red;
+        margin-bottom: 10px;
+    }
+</style>
+
+<div style="padding:20px;">
+    <h3>Smart ERP AI Agent</h3>
+
+    <div class="ai-wrapper">
+
+        <div class="ai-sidebar">
+            <button id="btnNewChat" type="button" class="btn btn-success btn-block">
+                + New Chat
+            </button>
+
+            <hr />
+
+            <strong>Previous Chats</strong>
+            <div id="chatList" style="margin-top:10px;"></div>
+        </div>
+
+        <div class="ai-main">
+
+            <div class="ai-header">
+                <select id="aiMode" class="form-control" style="width:220px;display:inline-block;">
+                    <option value="General">General AI Chat</option>
+                    <option value="ERP">ERP AI Assistant</option>
+                </select>
+            </div>
+
+            <div id="chatBox"></div>
+
+            <div>
+                <textarea id="txtMessage" class="form-control" rows="3" placeholder="Ask anything..."></textarea>
+                <button id="btnSend" type="button" class="btn btn-primary" style="margin-top:8px;">
+                    Send
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+    var currentSessionId = 0;
+
+    $(document).ready(function () {
+        loadChatList();
+
+        $("#btnNewChat").click(function () {
+            createNewChat();
+        });
+
+        $("#btnSend").click(function () {
+            sendMessage();
+        });
+
+        $("#txtMessage").keypress(function (e) {
+            if (e.which === 13 && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    });
+
+    function createNewChat() {
+        currentSessionId = 0;
+        $("#chatBox").html("");
+        $("#txtMessage").val("");
+    }
+
+    function loadChatList() {
+        $.ajax({
+            url: "/AiAgent/GetChatSessions",
+            type: "GET",
+            success: function (data) {
+                $("#chatList").html("");
+
+                if (!data || data.length === 0) {
+                    $("#chatList").append("<div>No previous chat</div>");
+                    return;
+                }
+
+                $.each(data, function (i, item) {
+                    $("#chatList").append(
+                        "<div class='chat-item' onclick='loadChat(" + item.id + ")'>" +
+                        escapeHtml(item.title) +
+                        "</div>"
+                    );
+                });
+            }
+        });
+    }
+
+    function loadChat(sessionId) {
+        currentSessionId = sessionId;
+        $("#chatBox").html("");
+
+        $.ajax({
+            url: "/AiAgent/GetChatMessages",
+            type: "GET",
+            data: { sessionId: sessionId },
+            success: function (data) {
+                $.each(data, function (i, msg) {
+                    $("#chatBox").append("<div class='user-msg'><b>You:</b> " + escapeHtml(msg.userMessage) + "</div>");
+                    $("#chatBox").append("<div class='ai-msg'><b>AI:</b> " + escapeHtml(msg.aiReply) + "</div>");
+                });
+
+                $("#chatBox").scrollTop($("#chatBox")[0].scrollHeight);
+            }
+        });
+    }
+
+    function sendMessage() {
+        var msg = $("#txtMessage").val();
+        var mode = $("#aiMode").val();
+
+        if (!msg || msg.trim() === "") {
+            alert("Please write a message.");
+            return;
+        }
+
+        $("#chatBox").append("<div class='user-msg'><b>You:</b> " + escapeHtml(msg) + "</div>");
+        $("#txtMessage").val("");
+
+        $.ajax({
+            url: "/AiAgent/SendMessage",
+            type: "POST",
+            data: {
+                sessionId: currentSessionId,
+                mode: mode,
+                message: msg
+            },
+            success: function (res) {
+                if (res.success) {
+                    currentSessionId = res.sessionId;
+
+                    $("#chatBox").append("<div class='ai-msg'><b>AI:</b> " + escapeHtml(res.reply) + "</div>");
+                    $("#chatBox").scrollTop($("#chatBox")[0].scrollHeight);
+
+                    loadChatList();
+                } else {
+                    $("#chatBox").append("<div class='error-msg'><b>Error:</b> " + escapeHtml(res.message) + "</div>");
+                }
+            },
+            error: function (xhr) {
+                $("#chatBox").append("<div class='error-msg'><b>AJAX Error:</b> " + escapeHtml(xhr.responseText) + "</div>");
+            }
+        });
+    }
+
+    function escapeHtml(text) {
+        if (text == null) return "";
+        return $("<div/>").text(text).html();
+    }
+</script>

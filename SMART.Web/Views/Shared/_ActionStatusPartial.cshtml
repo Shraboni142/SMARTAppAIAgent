@@ -1,0 +1,13 @@
+﻿<div class="row col-md-12">
+    @{
+        var msg = (string)TempData["msg"];
+        if (!string.IsNullOrEmpty(msg) && msg.Contains("Success"))
+        {
+            <p class="text-center bg-success">@msg</p>
+        }
+        else
+        {
+            <p class="text-center bg-danger">@msg</p>
+        }
+    }
+</div>
