@@ -41,6 +41,7 @@ namespace SMART.Web.App_Start
             builder.RegisterType<AiAgentService>().As<IAiAgentService>().InstancePerRequest();
             builder.RegisterType<AiLlmService>().As<IAiLlmService>().InstancePerRequest();
             builder.RegisterType<ErpAiDataService>().As<IErpAiDataService>().InstancePerRequest();
+            builder.RegisterType<ErpSchemaService>().As<IErpSchemaService>().InstancePerRequest();
 
 
 

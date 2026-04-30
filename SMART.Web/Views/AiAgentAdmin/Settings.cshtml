@@ -1,0 +1,54 @@
+﻿@model SMART.Web.Models.AI.AiAgentSetting
+
+@{
+    ViewBag.Title = "AI Agent Settings";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div style="padding:20px;">
+    <h3>AI Agent Settings</h3>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    @using (Html.BeginForm("Settings", "AiAgentAdmin", FormMethod.Post))
+    {
+        @Html.HiddenFor(x => x.Id)
+
+        <div class="form-group">
+            <label>Provider Name</label>
+            @Html.TextBoxFor(x => x.ProviderName, new { @class = "form-control", placeholder = "Local Llama API" })
+        </div>
+
+        <div class="form-group">
+            <label>API Base URL</label>
+            @Html.TextBoxFor(x => x.ApiBaseUrl, new { @class = "form-control", placeholder = "http://192.168.26.80:8080/v1" })
+        </div>
+
+        <div class="form-group">
+            <label>API Key</label>
+            @Html.TextBoxFor(x => x.ApiKey, new { @class = "form-control", placeholder = "API Key" })
+        </div>
+
+        <div class="form-group">
+            <label>Model Name</label>
+            @Html.TextBoxFor(x => x.ModelName, new { @class = "form-control", placeholder = "Llama-3.2-3B-Instruct-Q4_K_M" })
+        </div>
+
+        <div class="checkbox">
+            <label>
+                @Html.CheckBoxFor(x => x.IsActive) Active
+            </label>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save Settings</button>
+        <a href="/AiAgent" class="btn btn-default">Back to AI Agent</a>
+    }
+</div>

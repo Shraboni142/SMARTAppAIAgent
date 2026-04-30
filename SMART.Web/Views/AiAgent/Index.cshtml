@@ -4,77 +4,129 @@
 }
 
 <style>
-    .ai-wrapper {
+    .ai-page {
+        padding: 15px;
+    }
+
+    .ai-shell {
         display: flex;
-        height: 620px;
+        height: calc(100vh - 180px);
+        min-height: 560px;
         border: 1px solid #ddd;
         background: #fff;
     }
 
     .ai-sidebar {
-        width: 260px;
+        width: 280px;
+        background: #f7f7f7;
         border-right: 1px solid #ddd;
         padding: 12px;
-        background: #f7f7f7;
         overflow-y: auto;
     }
 
     .ai-main {
         flex: 1;
-        padding: 15px;
         display: flex;
         flex-direction: column;
-    }
-
-    .ai-header {
-        margin-bottom: 10px;
+        padding: 15px;
     }
 
     .chat-item {
-        padding: 8px;
-        margin-bottom: 6px;
+        padding: 10px;
+        margin-bottom: 7px;
         background: #fff;
         border: 1px solid #ddd;
+        border-radius: 6px;
         cursor: pointer;
-        border-radius: 4px;
+        font-size: 13px;
     }
 
-        .chat-item:hover {
-            background: #e9f2ff;
+        .chat-item:hover, .chat-item.active {
+            background: #e8f1ff;
+            border-color: #9cc7ff;
         }
 
     #chatBox {
         flex: 1;
         overflow-y: auto;
-        border: 1px solid #ddd;
-        padding: 15px;
         background: #fafafa;
-        margin-bottom: 10px;
+        border: 1px solid #ddd;
+        padding: 18px;
+        margin-bottom: 12px;
     }
 
-    .user-msg {
-        margin-bottom: 10px;
+    .msg-row {
+        display: flex;
+        margin-bottom: 12px;
     }
 
-    .ai-msg {
-        margin-bottom: 15px;
+        .msg-row.user {
+            justify-content: flex-end;
+        }
+
+        .msg-row.ai {
+            justify-content: flex-start;
+        }
+
+    .msg-bubble {
+        max-width: 75%;
+        padding: 10px 13px;
+        border-radius: 12px;
+        line-height: 1.5;
+        word-break: break-word;
+    }
+
+    .user .msg-bubble {
+        background: #007bff;
+        color: #fff;
+        border-bottom-right-radius: 3px;
+    }
+
+    .ai .msg-bubble {
         background: #fff;
-        padding: 8px;
-        border-radius: 4px;
-        border: 1px solid #eee;
+        border: 1px solid #ddd;
+        color: #333;
+        border-bottom-left-radius: 3px;
     }
 
-    .error-msg {
-        color: red;
-        margin-bottom: 10px;
+    .ai-input-area {
+        display: flex;
+        gap: 8px;
+        align-items: flex-end;
+    }
+
+    #txtMessage {
+        resize: none;
+    }
+
+    .loading-text {
+        font-style: italic;
+        color: #777;
+    }
+
+    @@media(max-width: 768px) {
+        .ai-shell {
+            flex-direction: column;
+            height: auto;
+        }
+
+        .ai-sidebar {
+            width: 100%;
+            height: 180px;
+            border-right: none;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .msg-bubble {
+            max-width: 95%;
+        }
     }
 </style>
 
-<div style="padding:20px;">
+<div class="ai-page">
     <h3>Smart ERP AI Agent</h3>
 
-    <div class="ai-wrapper">
-
+    <div class="ai-shell">
         <div class="ai-sidebar">
             <button id="btnNewChat" type="button" class="btn btn-success btn-block">
                 + New Chat
@@ -87,23 +139,27 @@
         </div>
 
         <div class="ai-main">
-
-            <div class="ai-header">
-                <select id="aiMode" class="form-control" style="width:220px;display:inline-block;">
+            <div style="margin-bottom:10px;">
+                <select id="aiMode" class="form-control" style="width:230px;display:inline-block;">
                     <option value="General">General AI Chat</option>
                     <option value="ERP">ERP AI Assistant</option>
                 </select>
             </div>
 
-            <div id="chatBox"></div>
+            <div id="chatBox">
+                <div class="msg-row ai">
+                    <div class="msg-bubble">
+                        Hello! I am your Smart ERP AI Agent. How can I help you?
+                    </div>
+                </div>
+            </div>
 
-            <div>
-                <textarea id="txtMessage" class="form-control" rows="3" placeholder="Ask anything..."></textarea>
-                <button id="btnSend" type="button" class="btn btn-primary" style="margin-top:8px;">
+            <div class="ai-input-area">
+                <textarea id="txtMessage" class="form-control" rows="2" placeholder="Ask anything..."></textarea>
+                <button id="btnSend" type="button" class="btn btn-primary">
                     Send
                 </button>
             </div>
-
         </div>
     </div>
 </div>
@@ -124,8 +180,8 @@
             sendMessage();
         });
 
-        $("#txtMessage").keypress(function (e) {
-            if (e.which === 13 && !e.shiftKey) {
+        $("#txtMessage").keydown(function (e) {
+            if (e.keyCode === 13 && !e.shiftKey) {
                 e.preventDefault();
                 sendMessage();
             }
@@ -134,8 +190,11 @@
 
     function createNewChat() {
         currentSessionId = 0;
-        $("#chatBox").html("");
+        $(".chat-item").removeClass("active");
         $("#txtMessage").val("");
+        $("#chatBox").html(
+            "<div class='msg-row ai'><div class='msg-bubble'>New chat started. Ask your question.</div></div>"
+        );
     }
 
     function loadChatList() {
@@ -146,13 +205,13 @@
                 $("#chatList").html("");
 
                 if (!data || data.length === 0) {
-                    $("#chatList").append("<div>No previous chat</div>");
+                    $("#chatList").append("<div style='color:#777;margin-top:8px;'>No previous chat</div>");
                     return;
                 }
 
                 $.each(data, function (i, item) {
                     $("#chatList").append(
-                        "<div class='chat-item' onclick='loadChat(" + item.id + ")'>" +
+                        "<div class='chat-item' id='chatItem_" + item.id + "' onclick='loadChat(" + item.id + ")'>" +
                         escapeHtml(item.title) +
                         "</div>"
                     );
@@ -163,6 +222,8 @@
 
     function loadChat(sessionId) {
         currentSessionId = sessionId;
+        $(".chat-item").removeClass("active");
+        $("#chatItem_" + sessionId).addClass("active");
         $("#chatBox").html("");
 
         $.ajax({
@@ -171,11 +232,11 @@
             data: { sessionId: sessionId },
             success: function (data) {
                 $.each(data, function (i, msg) {
-                    $("#chatBox").append("<div class='user-msg'><b>You:</b> " + escapeHtml(msg.userMessage) + "</div>");
-                    $("#chatBox").append("<div class='ai-msg'><b>AI:</b> " + escapeHtml(msg.aiReply) + "</div>");
+                    appendUserMessage(msg.userMessage);
+                    appendAiMessage(msg.aiReply, false);
                 });
 
-                $("#chatBox").scrollTop($("#chatBox")[0].scrollHeight);
+                scrollBottom();
             }
         });
     }
@@ -189,8 +250,11 @@
             return;
         }
 
-        $("#chatBox").append("<div class='user-msg'><b>You:</b> " + escapeHtml(msg) + "</div>");
+        appendUserMessage(msg);
         $("#txtMessage").val("");
+        $("#btnSend").prop("disabled", true).text("Sending...");
+
+        var loadingId = addLoading();
 
         $.ajax({
             url: "/AiAgent/SendMessage",
@@ -201,21 +265,73 @@
                 message: msg
             },
             success: function (res) {
+                $("#" + loadingId).remove();
+
                 if (res.success) {
                     currentSessionId = res.sessionId;
-
-                    $("#chatBox").append("<div class='ai-msg'><b>AI:</b> " + escapeHtml(res.reply) + "</div>");
-                    $("#chatBox").scrollTop($("#chatBox")[0].scrollHeight);
-
+                    appendAiMessage(res.reply, res.isHtml);
                     loadChatList();
                 } else {
-                    $("#chatBox").append("<div class='error-msg'><b>Error:</b> " + escapeHtml(res.message) + "</div>");
+                    appendError(res.message);
                 }
             },
             error: function (xhr) {
-                $("#chatBox").append("<div class='error-msg'><b>AJAX Error:</b> " + escapeHtml(xhr.responseText) + "</div>");
+                $("#" + loadingId).remove();
+                appendError(xhr.responseText);
+            },
+            complete: function () {
+                $("#btnSend").prop("disabled", false).text("Send");
+                $("#txtMessage").focus();
             }
         });
+    }
+
+    function appendUserMessage(text) {
+        $("#chatBox").append(
+            "<div class='msg-row user'><div class='msg-bubble'>" +
+            escapeHtml(text) +
+            "</div></div>"
+        );
+        scrollBottom();
+    }
+
+    function appendAiMessage(text, isHtml) {
+        if (isHtml) {
+            $("#chatBox").append(
+                "<div class='msg-row ai'><div class='msg-bubble'>" +
+                text +
+                "</div></div>"
+            );
+        } else {
+            $("#chatBox").append(
+                "<div class='msg-row ai'><div class='msg-bubble'>" +
+                escapeHtml(text) +
+                "</div></div>"
+            );
+        }
+        scrollBottom();
+    }
+
+    function addLoading() {
+        var id = "loading_" + new Date().getTime();
+        $("#chatBox").append(
+            "<div class='msg-row ai' id='" + id + "'><div class='msg-bubble loading-text'>AI is thinking...</div></div>"
+        );
+        scrollBottom();
+        return id;
+    }
+
+    function appendError(text) {
+        $("#chatBox").append(
+            "<div class='msg-row ai'><div class='msg-bubble' style='color:red;'>" +
+            escapeHtml(text) +
+            "</div></div>"
+        );
+        scrollBottom();
+    }
+
+    function scrollBottom() {
+        $("#chatBox").scrollTop($("#chatBox")[0].scrollHeight);
     }
 
     function escapeHtml(text) {

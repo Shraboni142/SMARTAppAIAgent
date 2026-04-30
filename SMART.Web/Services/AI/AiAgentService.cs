@@ -15,6 +15,7 @@ namespace SMART.Web.Services.AI
         List<AiChatMessage> GetMessagesBySession(int sessionId);
         AiChatMessage SaveMessage(int sessionId, string userId, string mode, string userMessage, string aiReply);
         AiAgentSetting GetActiveSetting();
+        void UpdateAiSetting(AiAgentSetting model);
         void SaveAiAgent();
     }
 
@@ -91,7 +92,40 @@ namespace SMART.Web.Services.AI
 
             return message;
         }
+        public void UpdateAiSetting(AiAgentSetting model)
+        {
+            var setting = _settingRepository
+                .GetMany(x => x.Id == model.Id)
+                .FirstOrDefault();
 
+            if (setting == null)
+            {
+                setting = new AiAgentSetting
+                {
+                    ProviderName = model.ProviderName,
+                    ApiBaseUrl = model.ApiBaseUrl,
+                    ApiKey = model.ApiKey,
+                    ModelName = model.ModelName,
+                    IsActive = model.IsActive,
+                    CreatedOn = DateTime.Now
+                };
+
+                _settingRepository.Add(setting);
+            }
+            else
+            {
+                setting.ProviderName = model.ProviderName;
+                setting.ApiBaseUrl = model.ApiBaseUrl;
+                setting.ApiKey = model.ApiKey;
+                setting.ModelName = model.ModelName;
+                setting.IsActive = model.IsActive;
+                setting.UpdatedOn = DateTime.Now;
+
+                _settingRepository.Update(setting);
+            }
+
+            SaveAiAgent();
+        }
         public AiAgentSetting GetActiveSetting()
         {
             return _settingRepository

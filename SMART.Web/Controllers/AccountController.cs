@@ -1,14 +1,15 @@
-﻿using System;
+﻿using Microsoft.AspNet.Identity;
+using Microsoft.AspNet.Identity.Owin;
+using Microsoft.Owin.Security;
+using SMART.Web.Models;
+using SMART.Web.Services.AI;
+using System;
 using System.Globalization;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
-using Microsoft.AspNet.Identity;
-using Microsoft.AspNet.Identity.Owin;
-using Microsoft.Owin.Security;
-using SMART.Web.Models;
 
 namespace SMART.Web.Controllers
 {
@@ -17,6 +18,7 @@ namespace SMART.Web.Controllers
     {
         private ApplicationSignInManager _signInManager;
         private ApplicationUserManager _userManager;
+        private readonly IErpSchemaService _erpSchemaService;
 
         public AccountController()
         {
@@ -193,6 +195,12 @@ namespace SMART.Web.Controllers
             return View();
         }
 
+        [HttpGet]
+        public ContentResult TestSchema()
+        {
+            var schema = _erpSchemaService.GetSchemaContext();
+            return Content(schema, "text/plain");
+        }
         //
         // POST: /Account/ForgotPassword
         [HttpPost]

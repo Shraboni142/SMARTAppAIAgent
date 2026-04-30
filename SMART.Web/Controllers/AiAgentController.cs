@@ -11,21 +11,25 @@ namespace SMART.Web.Controllers
         private readonly IAiAgentService _aiAgentService;
         private readonly IAiLlmService _aiLlmService;
         private readonly IErpAiDataService _erpAiDataService;
+        private readonly IErpSchemaService _erpSchemaService; // ✅ ADD
 
         public AiAgentController(
-    IAiAgentService aiAgentService,
-    IAiLlmService aiLlmService,
-    IErpAiDataService erpAiDataService)
+            IAiAgentService aiAgentService,
+            IAiLlmService aiLlmService,
+            IErpAiDataService erpAiDataService,
+            IErpSchemaService erpAiDataServiceSchema) // ✅ ADD PARAM
         {
             _aiAgentService = aiAgentService;
             _aiLlmService = aiLlmService;
             _erpAiDataService = erpAiDataService;
+            _erpSchemaService = erpAiDataServiceSchema; // ✅ ASSIGN
         }
 
         public ActionResult Index()
         {
             return View();
         }
+
         [HttpPost]
         public JsonResult SendMessage(int? sessionId, string mode, string message)
         {
@@ -53,11 +57,87 @@ namespace SMART.Web.Controllers
 
                 if (mode == "ERP")
                 {
-                    var erpContext = _erpAiDataService.GetErpContext(message);
+                    var employeeListHtml = _erpAiDataService.GetEmployeeListHtml(message);
 
+                    if (!string.IsNullOrEmpty(employeeListHtml))
+                    {
+                        var saved = _aiAgentService.SaveMessage(session.Id, userId, mode, message, employeeListHtml);
+
+                        return Json(new
+                        {
+                            success = true,
+                            sessionId = saved.SessionId,
+                            reply = employeeListHtml,
+                            isHtml = true
+                        });
+                    }
+
+                    var complainListHtml = _erpAiDataService.GetComplainListHtml(message);
+
+                    if (!string.IsNullOrEmpty(complainListHtml))
+                    {
+                        var saved = _aiAgentService.SaveMessage(session.Id, userId, mode, message, complainListHtml);
+
+                        return Json(new
+                        {
+                            success = true,
+                            sessionId = saved.SessionId,
+                            reply = complainListHtml,
+                            isHtml = true
+                        });
+                    }
+
+                    var activeEmployeeListHtml = _erpAiDataService.GetActiveEmployeeListHtml(message);
+
+                    if (!string.IsNullOrEmpty(activeEmployeeListHtml))
+                    {
+                        var saved = _aiAgentService.SaveMessage(session.Id, userId, mode, message, activeEmployeeListHtml);
+
+                        return Json(new
+                        {
+                            success = true,
+                            sessionId = saved.SessionId,
+                            reply = activeEmployeeListHtml,
+                            isHtml = true
+                        });
+                    }
+
+                    // 🔥 Smart DB answer
+                    var smartAnswer = _erpAiDataService.GetSmartErpAnswer(message);
+
+                    if (!string.IsNullOrEmpty(smartAnswer))
+                    {
+                        var saved = _aiAgentService.SaveMessage(
+                            session.Id,
+                            userId,
+                            mode,
+                            message,
+                            smartAnswer
+                        );
+
+                        return Json(new
+                        {
+                            success = true,
+                            sessionId = saved.SessionId,
+                            reply = smartAnswer
+                        });
+                    }
+
+                    // 🔥 AI fallback with context
+                    var erpContext = _erpAiDataService.GetErpContext(message);
+                    var schemaContext = _erpSchemaService.GetSchemaContext();
                     message =
-                        "ERP Assistant Query: " + message +
-                        "\n\nUse this ERP database context:\n" + erpContext;
+                        message =
+    "You are Smart ERP AI Assistant.\n" +
+    "Use database schema to answer.\n" +
+    "Only generate business answers.\n" +
+    "Do NOT explain code.\n\n" +
+
+    "DATABASE SCHEMA:\n" + schemaContext + "\n\n" +
+
+    "ERP DATA CONTEXT:\n" + erpContext + "\n\n" +
+
+    "USER QUESTION:\n" + message;
                 }
 
                 var aiReply = _aiLlmService.AskAi(setting, message);
@@ -88,6 +168,7 @@ namespace SMART.Web.Controllers
                 });
             }
         }
+
         [HttpGet]
         public JsonResult GetChatSessions()
         {
@@ -135,6 +216,14 @@ namespace SMART.Web.Controllers
                 .ToList();
 
             return Json(data, JsonRequestBehavior.AllowGet);
+        }
+
+        // ✅ NEW ADD (Schema Test)
+        [HttpGet]
+        public ContentResult TestSchema()
+        {
+            var schema = _erpSchemaService.GetSchemaContext();
+            return Content(schema, "text/plain");
         }
     }
 }
