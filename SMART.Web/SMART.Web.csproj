@@ -245,7 +245,9 @@
     <Compile Include="Services\AI\ErpAiDataService.cs" />
     <Compile Include="Services\AI\ErpQueryExecutorService.cs" />
     <Compile Include="Services\AI\ErpRelevantTableService.cs" />
+    <Compile Include="Services\AI\ErpSchemaRegistryService.cs" />
     <Compile Include="Services\AI\ErpSchemaService.cs" />
+	  <Compile Include="Services\AI\ErpSchemaRegistryService.cs" />
     <Compile Include="Services\AI\ErpSqlGeneratorService.cs" />
     <Compile Include="Services\AI\ErpSqlSafetyService.cs" />
     <Compile Include="Services\HRM\EmployeeComplainService.cs" />

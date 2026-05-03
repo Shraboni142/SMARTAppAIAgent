@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Data;
+using System.Data.SqlClient;
+using System.Text;
+using System.Web;
 using SMART.Web.Models;
 
 namespace SMART.Web.Services.AI
@@ -20,52 +23,70 @@ namespace SMART.Web.Services.AI
 
         public string ExecuteSelectQuery(string sql)
         {
-            try
+            if (string.IsNullOrWhiteSpace(sql))
+                return "No valid SQL query generated.";
+
+            var connection = _context.Database.Connection;
+
+            using (var cmd = connection.CreateCommand())
             {
-                using (var conn = _context.Database.Connection)
+                cmd.CommandText = sql;
+                cmd.CommandTimeout = 60;
+
+                if (connection.State != ConnectionState.Open)
+                    connection.Open();
+
+                using (var reader = cmd.ExecuteReader())
                 {
-                    if (conn.State != ConnectionState.Open)
-                        conn.Open();
+                    var sb = new StringBuilder();
 
-                    using (var cmd = conn.CreateCommand())
+                    sb.Append("<div class='table-responsive'>");
+                    sb.Append("<table class='table table-bordered table-striped table-sm'>");
+
+                    sb.Append("<thead><tr>");
+                    for (int i = 0; i < reader.FieldCount; i++)
                     {
-                        cmd.CommandText = sql;
-
-                        using (var reader = cmd.ExecuteReader())
-                        {
-                            var table = new DataTable();
-                            table.Load(reader);
-
-                            if (table.Rows.Count == 0)
-                                return "No data found.";
-
-                            var html = "<table class='table table-bordered table-striped'>";
-                            html += "<thead><tr>";
-
-                            foreach (DataColumn col in table.Columns)
-                                html += "<th>" + col.ColumnName + "</th>";
-
-                            html += "</tr></thead><tbody>";
-
-                            foreach (DataRow row in table.Rows)
-                            {
-                                html += "<tr>";
-
-                                foreach (var item in row.ItemArray)
-                                    html += "<td>" + item + "</td>";
-
-                                html += "</tr>";
-                            }
-
-                            html += "</tbody></table>";
-                            return html;
-                        }
+                        sb.Append("<th>");
+                        sb.Append(HttpUtility.HtmlEncode(reader.GetName(i)));
+                        sb.Append("</th>");
                     }
+                    sb.Append("</tr></thead>");
+
+                    sb.Append("<tbody>");
+
+                    int rowCount = 0;
+
+                    while (reader.Read())
+                    {
+                        rowCount++;
+
+                        sb.Append("<tr>");
+
+                        for (int i = 0; i < reader.FieldCount; i++)
+                        {
+                            var value = reader.IsDBNull(i) ? "" : Convert.ToString(reader.GetValue(i));
+
+                            sb.Append("<td>");
+                            sb.Append(HttpUtility.HtmlEncode(value));
+                            sb.Append("</td>");
+                        }
+
+                        sb.Append("</tr>");
+                    }
+
+                    if (rowCount == 0)
+                    {
+                        sb.Append("<tr><td colspan='");
+                        sb.Append(reader.FieldCount);
+                        sb.Append("'>No data found.</td></tr>");
+                    }
+
+                    sb.Append("</tbody>");
+                    sb.Append("</table>");
+                    sb.Append("</div>");
+
+                    return sb.ToString();
                 }
-            }
-            catch (Exception ex)
-            {
-                return "Query execution error: " + ex.Message;
             }
         }
     }

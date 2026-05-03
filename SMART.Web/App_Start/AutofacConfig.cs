@@ -47,6 +47,7 @@ namespace SMART.Web.App_Start
             builder.RegisterType<ErpSqlGeneratorService>().As<IErpSqlGeneratorService>().InstancePerRequest();
             builder.RegisterType<ErpQueryExecutorService>().As<IErpQueryExecutorService>().InstancePerRequest();
             builder.RegisterType<ErpRelevantTableService>().As<IErpRelevantTableService>().InstancePerRequest();
+            builder.RegisterType<ErpSchemaRegistryService>().As<IErpSchemaRegistryService>().InstancePerRequest();
 
 
             // DB

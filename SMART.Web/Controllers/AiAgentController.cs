@@ -15,7 +15,10 @@ namespace SMART.Web.Controllers
         private readonly IErpSqlGeneratorService _erpSqlGeneratorService;
         private readonly IErpSqlSafetyService _erpSqlSafetyService;
         private readonly IErpQueryExecutorService _erpQueryExecutorService;
-        private readonly IErpRelevantTableService _erpRelevantTableService;// ✅ ADD
+        private readonly IErpRelevantTableService _erpRelevantTableService;
+
+        // ✅ NEW ADD: Schema Registry Service
+        private readonly IErpSchemaRegistryService _erpSchemaRegistryService;
 
         public AiAgentController(
             IAiAgentService aiAgentService,
@@ -23,9 +26,10 @@ namespace SMART.Web.Controllers
             IErpAiDataService erpAiDataService,
             IErpSchemaService erpAiDataServiceSchema,
             IErpSqlGeneratorService erpSqlGeneratorService,
-IErpSqlSafetyService erpSqlSafetyService,
-IErpQueryExecutorService erpQueryExecutorService,
-IErpRelevantTableService erpRelevantTableService) // ✅ ADD PARAM
+            IErpSqlSafetyService erpSqlSafetyService,
+            IErpQueryExecutorService erpQueryExecutorService,
+            IErpRelevantTableService erpRelevantTableService,
+            IErpSchemaRegistryService erpSchemaRegistryService) // ✅ NEW ADD PARAM
         {
             _aiAgentService = aiAgentService;
             _aiLlmService = aiLlmService;
@@ -34,7 +38,10 @@ IErpRelevantTableService erpRelevantTableService) // ✅ ADD PARAM
             _erpSqlGeneratorService = erpSqlGeneratorService;
             _erpSqlSafetyService = erpSqlSafetyService;
             _erpQueryExecutorService = erpQueryExecutorService;
-            _erpRelevantTableService = erpRelevantTableService;// ✅ ASSIGN
+            _erpRelevantTableService = erpRelevantTableService;
+
+            // ✅ NEW ADD ASSIGN
+            _erpSchemaRegistryService = erpSchemaRegistryService;
         }
 
         public ActionResult Index()
@@ -61,6 +68,7 @@ IErpRelevantTableService erpRelevantTableService) // ✅ ADD PARAM
 
                 if (session == null)
                 {
+                    // ✅ This is only chat title, not message limit
                     var title = message.Length > 40 ? message.Substring(0, 40) + "..." : message;
                     session = _aiAgentService.CreateSession(userId, mode, title);
                 }
@@ -134,7 +142,9 @@ IErpRelevantTableService erpRelevantTableService) // ✅ ADD PARAM
                             reply = smartAnswer
                         });
                     }
-                    var schemaForSql = _erpRelevantTableService.GetRelevantSchemaContext(message);
+
+                    // ✅ NEW: Schema based relevant context from DB schema, not manual table list
+                    var schemaForSql = _erpSchemaRegistryService.GetRelevantSchemaContext(message);
 
                     var generatedSql = _erpSqlGeneratorService.GenerateSql(setting, schemaForSql, message);
                     generatedSql = _erpSqlSafetyService.NormalizeSql(generatedSql);
@@ -154,21 +164,24 @@ IErpRelevantTableService erpRelevantTableService) // ✅ ADD PARAM
                             generatedSql = generatedSql
                         });
                     }
-                    // 🔥 AI fallback with context
+
+                    // 🔥 AI fallback with relevant schema context
                     var erpContext = _erpAiDataService.GetErpContext(message);
-                    var schemaContext = _erpSchemaService.GetSchemaContext();
+
+                    // ✅ NEW: Full schema na, only relevant schema
+                    var schemaContext = _erpSchemaRegistryService.GetRelevantSchemaContext(message);
+
                     message =
-                        message =
-    "You are Smart ERP AI Assistant.\n" +
-    "Use database schema to answer.\n" +
-    "Only generate business answers.\n" +
-    "Do NOT explain code.\n\n" +
+                        "You are Smart ERP AI Assistant.\n" +
+                        "Use database schema to answer.\n" +
+                        "Only generate business answers.\n" +
+                        "Do NOT explain code.\n\n" +
 
-    "DATABASE SCHEMA:\n" + schemaContext + "\n\n" +
+                        "DATABASE SCHEMA:\n" + schemaContext + "\n\n" +
 
-    "ERP DATA CONTEXT:\n" + erpContext + "\n\n" +
+                        "ERP DATA CONTEXT:\n" + erpContext + "\n\n" +
 
-    "USER QUESTION:\n" + message;
+                        "USER QUESTION:\n" + message;
                 }
 
                 var aiReply = _aiLlmService.AskAi(setting, message);
@@ -190,7 +203,7 @@ IErpRelevantTableService erpRelevantTableService) // ✅ ADD PARAM
                     error += " | Inner: " + ex.InnerException.Message;
 
                 if (ex.InnerException != null && ex.InnerException.InnerException != null)
-                    error += " | Inner 2: " + ex.InnerException.InnerException.Message;
+                    error += " | Inner2: " + ex.InnerException.InnerException.Message;
 
                 return Json(new
                 {
@@ -249,11 +262,19 @@ IErpRelevantTableService erpRelevantTableService) // ✅ ADD PARAM
             return Json(data, JsonRequestBehavior.AllowGet);
         }
 
-        // ✅ NEW ADD (Schema Test)
+        // ✅ Schema Test - Full DB Schema
         [HttpGet]
         public ContentResult TestSchema()
         {
-            var schema = _erpSchemaService.GetSchemaContext();
+            var schema = _erpSchemaRegistryService.GetFullSchemaContext();
+            return Content(schema, "text/plain");
+        }
+
+        // ✅ NEW ADD: Test relevant schema by question
+        [HttpGet]
+        public ContentResult TestRelevantSchema(string question)
+        {
+            var schema = _erpSchemaRegistryService.GetRelevantSchemaContext(question);
             return Content(schema, "text/plain");
         }
     }
