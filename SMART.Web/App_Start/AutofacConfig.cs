@@ -1,5 +1,4 @@
-﻿
-using Autofac;
+﻿using Autofac;
 using Autofac.Integration.Mvc;
 using SMART.Web.Models;
 using SMART.Web.Repositories;
@@ -22,10 +21,10 @@ namespace SMART.Web.App_Start
         {
             var builder = new ContainerBuilder();
 
-            // Register all MVC controllers
+            // Controllers
             builder.RegisterControllers(Assembly.GetExecutingAssembly());
 
-            // repository
+            // Repositories
             builder.RegisterType<ItemUnitRepository>().As<IItemUnitRepository>().InstancePerRequest();
             builder.RegisterType<EmployeeRepository>().As<IEmployeeRepository>().InstancePerRequest();
             builder.RegisterType<EmployeeComplainRepository>().As<IEmployeeComplainRepository>().InstancePerRequest();
@@ -33,24 +32,28 @@ namespace SMART.Web.App_Start
             builder.RegisterType<AiChatMessageRepository>().As<IAiChatMessageRepository>().InstancePerRequest();
             builder.RegisterType<AiAgentSettingRepository>().As<IAiAgentSettingRepository>().InstancePerRequest();
 
-
-            // service
+            // Services
             builder.RegisterType<ItemUnitService>().As<IItemUnitService>().InstancePerRequest();
             builder.RegisterType<EmployeeService>().As<IEmployeeService>().InstancePerRequest();
             builder.RegisterType<EmployeeComplainService>().As<IEmployeeComplainService>().InstancePerRequest();
+
             builder.RegisterType<AiAgentService>().As<IAiAgentService>().InstancePerRequest();
             builder.RegisterType<AiLlmService>().As<IAiLlmService>().InstancePerRequest();
+
+            // ERP AI Services
             builder.RegisterType<ErpAiDataService>().As<IErpAiDataService>().InstancePerRequest();
             builder.RegisterType<ErpSchemaService>().As<IErpSchemaService>().InstancePerRequest();
+            builder.RegisterType<ErpSqlSafetyService>().As<IErpSqlSafetyService>().InstancePerRequest();
+            builder.RegisterType<ErpSqlGeneratorService>().As<IErpSqlGeneratorService>().InstancePerRequest();
+            builder.RegisterType<ErpQueryExecutorService>().As<IErpQueryExecutorService>().InstancePerRequest();
+            builder.RegisterType<ErpRelevantTableService>().As<IErpRelevantTableService>().InstancePerRequest();
 
 
-
-            // Register DbContext
+            // DB
             builder.RegisterType<ApplicationDbContext>().AsSelf().InstancePerRequest();
             builder.RegisterType<UnitOfWork>().As<IUnitOfWork>().InstancePerRequest();
 
             var container = builder.Build();
-
             DependencyResolver.SetResolver(new AutofacDependencyResolver(container));
         }
     }

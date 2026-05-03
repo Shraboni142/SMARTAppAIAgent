@@ -243,7 +243,11 @@
     <Compile Include="Services\AI\AiAgentService.cs" />
     <Compile Include="Services\AI\AiLlmService.cs" />
     <Compile Include="Services\AI\ErpAiDataService.cs" />
+    <Compile Include="Services\AI\ErpQueryExecutorService.cs" />
+    <Compile Include="Services\AI\ErpRelevantTableService.cs" />
     <Compile Include="Services\AI\ErpSchemaService.cs" />
+    <Compile Include="Services\AI\ErpSqlGeneratorService.cs" />
+    <Compile Include="Services\AI\ErpSqlSafetyService.cs" />
     <Compile Include="Services\HRM\EmployeeComplainService.cs" />
     <Compile Include="Services\INV\ItemUnitService.cs" />
     <Compile Include="Services\MST\EmployeeService.cs" />

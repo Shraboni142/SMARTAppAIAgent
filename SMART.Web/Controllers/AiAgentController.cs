@@ -11,18 +11,30 @@ namespace SMART.Web.Controllers
         private readonly IAiAgentService _aiAgentService;
         private readonly IAiLlmService _aiLlmService;
         private readonly IErpAiDataService _erpAiDataService;
-        private readonly IErpSchemaService _erpSchemaService; // ✅ ADD
+        private readonly IErpSchemaService _erpSchemaService;
+        private readonly IErpSqlGeneratorService _erpSqlGeneratorService;
+        private readonly IErpSqlSafetyService _erpSqlSafetyService;
+        private readonly IErpQueryExecutorService _erpQueryExecutorService;
+        private readonly IErpRelevantTableService _erpRelevantTableService;// ✅ ADD
 
         public AiAgentController(
             IAiAgentService aiAgentService,
             IAiLlmService aiLlmService,
             IErpAiDataService erpAiDataService,
-            IErpSchemaService erpAiDataServiceSchema) // ✅ ADD PARAM
+            IErpSchemaService erpAiDataServiceSchema,
+            IErpSqlGeneratorService erpSqlGeneratorService,
+IErpSqlSafetyService erpSqlSafetyService,
+IErpQueryExecutorService erpQueryExecutorService,
+IErpRelevantTableService erpRelevantTableService) // ✅ ADD PARAM
         {
             _aiAgentService = aiAgentService;
             _aiLlmService = aiLlmService;
             _erpAiDataService = erpAiDataService;
-            _erpSchemaService = erpAiDataServiceSchema; // ✅ ASSIGN
+            _erpSchemaService = erpAiDataServiceSchema;
+            _erpSqlGeneratorService = erpSqlGeneratorService;
+            _erpSqlSafetyService = erpSqlSafetyService;
+            _erpQueryExecutorService = erpQueryExecutorService;
+            _erpRelevantTableService = erpRelevantTableService;// ✅ ASSIGN
         }
 
         public ActionResult Index()
@@ -122,7 +134,26 @@ namespace SMART.Web.Controllers
                             reply = smartAnswer
                         });
                     }
+                    var schemaForSql = _erpRelevantTableService.GetRelevantSchemaContext(message);
 
+                    var generatedSql = _erpSqlGeneratorService.GenerateSql(setting, schemaForSql, message);
+                    generatedSql = _erpSqlSafetyService.NormalizeSql(generatedSql);
+
+                    if (_erpSqlSafetyService.IsSafeSelectQuery(generatedSql))
+                    {
+                        var sqlResultHtml = _erpQueryExecutorService.ExecuteSelectQuery(generatedSql);
+
+                        var saved = _aiAgentService.SaveMessage(session.Id, userId, mode, message, sqlResultHtml);
+
+                        return Json(new
+                        {
+                            success = true,
+                            sessionId = saved.SessionId,
+                            reply = sqlResultHtml,
+                            isHtml = true,
+                            generatedSql = generatedSql
+                        });
+                    }
                     // 🔥 AI fallback with context
                     var erpContext = _erpAiDataService.GetErpContext(message);
                     var schemaContext = _erpSchemaService.GetSchemaContext();
